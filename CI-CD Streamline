@@ -1,0 +1,210 @@
+Project – CI/CD Streamline
+
+Creating a Continuous Integration/Continuous Deployment (CI/CD) pipeline with AWS CodePipeline involves several steps, from setting up the source code repository to deploying the code. Here’s a detailed step-by-step guide to build a basic CI/CD pipeline using AWS CodePipeline:
+
+1. Set Up Your AWS Environment -
+•	Sign in to AWS Management Console:
+
+•	Go to AWS Management Console and sign in with your credentials.
+
+•	Navigate to AWS CodePipeline:
+
+•	Search for "CodePipeline" in the AWS Management Console search bar and select it.
+
+2. Create a Source Code Repository –
+•	Set Up a Repository:
+
+•	You can use AWS CodeCommit, GitHub, Bitbucket, or any other supported source repository.
+
+•	For this guide, let’s use AWS CodeCommit.
+
+•	Create a CodeCommit Repository:
+
+•	Navigate to AWS CodeCommit.
+
+•	Click "Create repository".
+
+•	Enter a repository name (e.g., my-repo).
+
+•	Optionally, enter a description.
+
+•	Click "Create repository".
+
+•	Push Your Code to CodeCommit:
+
+•	Clone the repository using the URL provided by CodeCommit.
+
+•	Add your application code to the repository.
+
+•	Commit and push your changes.
+
+•	Some  Commands:
+
+•	Bash Code
+git clone Error! Hyperlink reference not valid.
+cd my-repo
+# Add your code files
+git add .
+git commit -m "Initial commit"
+git push
+
+3. Create a Build Project in AWS CodeBuild -
+•	Navigate to AWS CodeBuild:
+
+•	Go to AWS CodeBuild.
+
+•	Create a New Build Project:
+
+•	Click "Create build project".
+
+•	Enter a project name (e.g., my-build-project).
+
+•	In "Source", choose "CodeCommit" and select the repository you created earlier.
+
+•	Configure "Environment":
+
+•	Choose "Managed image".
+
+•	Select the appropriate runtime (e.g., Ubuntu and a standard image with the language you are using).
+
+•	Buildspec: Choose "Use a buildspec file". This file defines the build commands. Create a buildspec.yml file in your repository root with the following sample content:
+
+•	YAML Code 
+version: 0.2
+phases:
+  	install:
+    	runtime-versions:
+      	python: 3.8
+    	commands:
+      	- echo Installing dependencies
+      	- pip install -r requirements.txt
+  	build:
+    	commands:
+      	- echo Building the project
+      	- python setup.py build
+artifacts:
+  	files:
+    	- '**/*'
+
+•	Artifacts: Define where the build artifacts should be stored. For simplicity, you can choose "No artifacts" if you're not generating any deployable artifacts.
+
+•	Click "Create build project".
+
+4. Create a Deployment Stage -
+•	Set Up an S3 Bucket for Deployment:
+
+•	Go to Amazon S3.
+
+•	Click "Create bucket".
+
+•	Enter a bucket name (e.g., my-deploy-bucket).
+
+•	Select the AWS region and click "Create bucket".
+
+•	Create a Pipeline in AWS CodePipeline:
+
+•	Go to AWS CodePipeline.
+
+•	Click "Create pipeline".
+
+•	Enter a pipeline name (e.g., my-pipeline).
+
+•	Add a Source Stage:
+
+•	Source Provider: Select "CodeCommit" (or your chosen source repository).
+
+•	Repository Name: Select the repository you created earlier.
+
+•	Branch Name: Select the branch you want to use.
+
+•	Click "Next".
+
+•	Add a Build Stage:
+
+•	Build Provider: Select "CodeBuild".
+
+•	Build Project: Select the build project you created earlier.
+
+•	Click "Next".
+
+•	Add a Deploy Stage:
+
+•	Deploy Provider: Choose "Amazon S3".
+
+•	Bucket Name: Select the S3 bucket you created earlier.
+
+•	Extract File: If your build artifacts are in a ZIP file, enable this option to extract them.
+
+•	Click "Next".
+
+•	Review and Create Pipeline:
+
+•	Review your pipeline configuration.
+
+•	Click "Create pipeline".
+
+
+
+
+
+5. Test Your CI/CD Pipeline -
+•	Trigger a Pipeline Execution:
+
+•	Make a change to your code repository (e.g., modify a file and push the changes).
+
+•	AWS CodePipeline will automatically detect changes in the repository and start a new pipeline execution.
+
+•	Monitor Pipeline Execution:
+
+•	Go to the AWS CodePipeline console.
+
+•	Select your pipeline to view the execution details.
+
+•	Monitor the progress of the source, build, and deploy stages.
+
+•	Verify Deployment:
+
+•	Check the S3 bucket to ensure your files have been deployed.
+
+•	If you’ve set up a static website in S3, you can access the website URL to verify the deployment.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+6. Clean Up Resources -
+•	Delete the S3 Bucket:
+
+•	Go to Amazon S3.
+
+•	Select your bucket and delete it.
+
+•	Delete the CodeBuild Project:
+
+•	Go to AWS CodeBuild.
+
+•	Select your build project and delete it.
+
+•	Delete the CodePipeline:
+
+•	Go to AWS CodePipeline.
+
+•	Select your pipeline and delete it.
+
+•	Delete the CodeCommit Repository:
+
+•	Go to AWS CodeCommit.
+
+•	Select your repository and delete it.
+
+By following these steps, you’ll have successfully created a basic CI/CD pipeline using AWS CodePipeline, incorporating source control, build automation, and deployment stages. This pipeline will automatically build and deploy your code changes whenever you push updates to your source repository.
+
