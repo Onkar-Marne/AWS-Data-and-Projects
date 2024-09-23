@@ -1,0 +1,290 @@
+Project - TieredCloud
+
+Building a multi-tier web application with Python as the application layer and SQL as the database engine involves several steps. Below is a detailed documentative guide on how to set this up on AWS using services such as S3, CloudFront, Elastic Beanstalk, and RDS.
+
+1. Set Up the Frontend -
+•	Frontend: A static website hosted on Amazon S3 and served through Amazon CloudFront.
+
+•	Create an S3 Bucket for Static Website Hosting :
+
+•	Navigate to Amazon S3:
+
+•	Go to the Amazon S3 Console.
+
+•	Create a Bucket:
+
+•	Click "Create bucket".
+
+•	Enter a unique bucket name (e.g., my-frontend-bucket).
+
+•	Choose a region.
+
+•	Click "Create bucket".
+
+•	Upload Your Website Files:
+
+•	Go to the "Objects" tab of your bucket.
+
+•	Click "Upload".
+
+•	Add your index.html, styles.css, script.js, and any other assets.
+
+•	Click "Upload".
+
+•	Enable Static Website Hosting:
+
+•	Go to the "Properties" tab of your bucket.
+
+•	Scroll down to "Static website hosting" and click "Edit".
+
+•	Enable "Static website hosting".
+
+•	Set "Index document" to index.html.
+
+•	Click "Save changes".
+
+•	Set Up CloudFront :
+
+•	Navigate to CloudFront:
+
+•	Go to the CloudFront Console.
+
+•	Create a Distribution:
+
+•	Click "Create Distribution".
+
+•	Choose "Web".
+
+•	Configure the Distribution:
+
+•	Origin Domain Name: Select your S3 bucket from the dropdown.
+
+•	Origin Path: Leave blank.
+
+•	Viewer Protocol Policy: Set to "Redirect HTTP to HTTPS" for better security.
+
+•	Default Root Object: Enter index.html.
+
+•	Click "Create Distribution".
+
+•	Update DNS Records (Optional):
+
+•	If you have a custom domain, update your DNS settings to point to the CloudFront distribution using Route 53 or your domain registrar.
+
+
+
+
+
+
+2. Set Up the Application Layer -
+•	Application Layer: Use AWS Elastic Beanstalk to deploy a Python web application.
+
+•	Create Python Application :
+
+•	File Structure:
+lua
+my-python-app/
+|-- application/
+|   |-- app.py
+|   |-- requirements.txt
+|-- .ebextensions/
+|   |-- python.config
+|-- Procfile
+|-- application.zip
+app.py:
+
+•	Python Code 
+
+from flask import Flask, jsonify
+import os
+import psycopg2
+
+app = Flask(__name__)
+
+# Database connection
+def get_db_connection():
+    	conn = psycopg2.connect(
+        	host=os.environ.get('DB_HOST'),
+        	database=os.environ.get('DB_NAME'),
+        	user=os.environ.get('DB_USER'),
+        	password=os.environ.get('DB_PASS')
+    	)
+    	return conn
+
+@app.route('/')
+def index():
+    	conn = get_db_connection()
+    	cursor = conn.cursor()
+    	cursor.execute('SELECT version()')
+    	db_version = cursor.fetchone()
+    	conn.close()
+    	return jsonify({"message": "Hello, World!", "db_version": db_version})
+
+if __name__ == '__main__':
+    	app.run(debug=True, host='0.0.0.0')
+
+•	requirements.txt:
+
+•	makefile
+Flask==2.1.1
+psycopg2-binary==2.9.1
+
+•	Procfile:
+makefile
+web: gunicorn app:app
+python.config (in .ebextensions directory):
+
+•	Option_settings:
+•	aws:elasticbeanstalk:container:python:
+
+•	WSGIPath: application/app:app
+
+•	application.zip:
+
+•	Zip the contents of the my-python-app/ directory to application.zip for deployment.
+
+•	Deploy the Application to Elastic Beanstalk :
+
+•	Navigate to Elastic Beanstalk:
+
+•	Go to the Elastic Beanstalk Console.
+
+•	Create a New Application:
+
+•	Click "Create a new application".
+
+•	Enter an application name (e.g., my-python-app).
+
+•	Click "Create Application".
+
+•	Create an Environment:
+
+•	Click "Create environment".
+
+•	Choose "Web server environment".
+
+•	Select "Python" as the platform.
+
+•	Upload Application Code:
+
+•	Click "Upload and Deploy".
+
+•	Upload application.zip.
+
+•	Configure Environment:
+
+•	Add environment variables for database connection under the "Configuration" section:
+
+•	DB_HOST: Your RDS endpoint.
+
+•	DB_NAME: Your database name.
+
+•	DB_USER: Your RDS master username.
+
+•	DB_PASS: Your RDS master password.
+
+•	Deploy:
+
+•	Elastic Beanstalk will handle the provisioning of resources and deployment of your application.
+
+3. Set Up the Database Layer –
+•	Database Layer: Use Amazon RDS with PostgreSQL as the database engine.
+
+•	Create an RDS Database Instance :
+
+•	Navigate to RDS:
+
+•	Go to the Amazon RDS Console.
+
+•	Launch a New Database Instance:
+
+•	Click "Create database".
+
+•	Choose "Standard Create".
+
+•	Configure Database Settings:
+
+•	Engine: Select PostgreSQL.
+
+•	DB Instance Class: Choose an instance size (e.g., db.t3.micro for free tier).
+
+•	Storage: Configure storage size (e.g., 20 GB).
+
+•	Database Name: Enter a name for your database (e.g., mydatabase).
+
+•	Master Username and Password: Set up credentials for accessing the database.
+
+•	Configure Advanced Settings:
+
+•	VPC: Choose the VPC where your Elastic Beanstalk application is located.
+
+•	Public Accessibility: Set to "No" for security if you don’t need public access.
+
+•	Backup: Configure backup settings if necessary.
+
+•	Launch the Database:
+
+•	Click "Create database".
+
+•	Wait for the database to become available.
+
+4. Connect Application to Database -
+•	Configure Elastic Beanstalk Environment Variables :
+
+•	Update Environment Variables:
+
+•	Go to the "Configuration" section of your Elastic Beanstalk environment.
+
+•	Click "Edit" under "Software".
+
+•	Add the following environment variables:
+
+•	DB_HOST: Your RDS endpoint (e.g., mydatabase.abcdefg12345.us-west-2.rds.amazonaws.com).
+
+•	DB_NAME: Your database name (e.g., mydatabase).
+
+•	DB_USER: Your RDS master username (e.g., admin).
+
+•	DB_PASS: Your RDS master password.
+
+•	Deploy the Updated Application:
+
+•	Ensure your application code uses these environment variables to connect to the database.
+
+5. Test and Validate -
+•	Test the Frontend:
+
+•	Access the CloudFront URL or custom domain to verify the static website is served correctly.
+
+•	Test the Application:
+
+•	Navigate to the Elastic Beanstalk URL to ensure the Python application is functioning as expected and able to connect to the database.
+
+•	Verify Database Connectivity:
+
+•	Ensure that the application can connect to the RDS instance and that database queries return the expected results.
+
+•	Monitor and Troubleshoot:
+
+•	Use CloudWatch logs and alarms to monitor the health of your application and troubleshoot any issues.
+
+6. Clean Up Resources – (Optional Settings)
+•	Delete Elastic Beanstalk Environment:
+
+•	Go to Elastic Beanstalk Console and terminate the environment.
+
+•	Delete RDS Instance:
+
+•	Go to RDS Console and delete the database instance.
+
+•	Delete S3 Bucket:
+
+•	Go to S3 Console and delete the bucket and its contents.
+
+•	Delete CloudFront Distribution:
+
+•	Go to CloudFront Console and delete the distribution.
+
+
+By following these steps, you will have successfully set up a multi-tier web application with Python as the application layer and SQL (PostgreSQL) as the database engine, showcasing your skills in deploying and managing a scalable and robust cloud-based application.
+
