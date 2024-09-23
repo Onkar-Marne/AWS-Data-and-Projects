@@ -1,0 +1,264 @@
+Project – QuickHost S3
+
+Here's a step-by-step guide to building a static website hosted on Amazon S3,  with HTML, CSS, JavaScript files, and images.
+
+1. Prepare Your Website Files -
+•	Let’s create a simple static website with the following structure:
+
+•	index.html (Main HTML file)
+
+•	styles.css (CSS file for styling)
+
+•	script.js (JavaScript file for interactivity)
+
+•	images/ (Folder containing images)
+
+•	Create the Files:
+
+•	Create index.html:
+
+•	HTML Code
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    	<meta charset="UTF-8">
+    	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    	<title>My Static Website</title>
+    	<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    	<header>
+        	<h1>Welcome to My Static Website</h1>
+        	<img src="images/logo.png" alt="Website Logo">
+    	</header>
+    	<main>
+        	<p>This is a sample static website hosted on AWS S3.</p>
+        	<button id="clickMe">Click Me</button>
+    	</main>
+    	<footer>
+       	 <p>&copy; 2024 My Static Website</p>
+    	</footer>
+    	<script src="script.js"></script>
+</body>
+</html>
+
+•	Create styles.css:
+
+•	CSS Code 
+body {
+    	font-family: Arial, sans-serif;
+    	margin: 0;
+    	padding: 0;
+    	background-color: #f4f4f4;
+}
+
+header {
+    	background-color: #333;
+    	color: #fff;
+    	padding: 1rem;
+    	text-align: center;
+}
+
+img {
+    	max-width: 100px;
+}
+
+main {
+    	padding: 2rem;
+    	text-align: center;
+}
+
+footer {
+    	background-color: #333;
+    	color: #fff;
+    	padding: 1rem;
+    	text-align: center;
+}	
+
+button {
+    	background-color: #007bff;
+    	color: #fff;
+    	border: none;
+    	padding: 0.5rem 1rem;
+    	cursor: pointer;
+    	font-size: 16px;
+}
+
+button:hover {
+    	background-color: #0056b3;
+}
+•	Create script.js:
+
+•	Javascript Code
+document.addEventListener('DOMContentLoaded', (event) => {
+    	document.getElementById('clickMe').addEventListener('click', () => {
+        	alert('Button clicked!');
+    	});
+});
+
+•	Add an Image:
+
+•	Save an image as logo.png in an images folder. You can use any image file for this purpose.
+
+2. Create an S3 Bucket -
+•	Sign in to AWS Management Console:
+
+•	Go to AWS Management Console and sign in with your credentials.
+
+•	Navigate to S3:
+
+•	Search for "S3" in the AWS Management Console search bar and select it.
+
+•	Create a New Bucket:
+
+•	Click "Create bucket".
+
+•	Enter a unique name for your bucket, such as my-static-website-bucket.
+
+•	Choose the AWS region where you want to host your bucket (e.g., us-east-1).
+
+•	Configure Bucket Settings:
+
+•	Leave Object Ownership and Block Public Access settings for now; you will adjust these later.
+
+•	Click "Next" to go to the "Permissions" tab.
+
+•	Set Permissions:
+
+•	Go to the "Bucket Policy" tab under the Permissions section. Click "Edit" and add a policy to allow public access:
+
+•	JSON Code
+{
+  	"Version": "2012-10-17",
+  	"Statement": [
+    	{
+      	"Effect": "Allow",
+     	 "Principal": "*",
+      	"Action": "s3:GetObject",
+      	"Resource": "arn:aws:s3:::my-static-website-bucket/*"
+    	}
+  	]
+}
+
+•	Replace my-static-website-bucket with your bucket name. Click "Save changes".
+
+•	Enable Static Website Hosting:
+
+•	Go to the "Properties" tab.
+
+•	Scroll down to the "Static website hosting" section and click "Edit".
+
+•	Select "Enable".
+
+•	In the "Index document" field, enter index.html.
+
+•	Optionally, enter a custom error document (e.g., error.html) if you have one.
+
+•	Click "Save changes".
+
+
+
+3. Upload Your Website Files -
+•	Upload Files to the Bucket:
+
+•	Go to the "Objects" tab of your bucket.
+
+•	Click "Upload".
+
+•	Click "Add files" and select index.html, styles.css, script.js, and the images/ folder containing logo.png.
+
+•	Click "Upload" to start the upload process.
+
+•	Verify Upload:
+
+•	Ensure that all your files are uploaded correctly in the S3 bucket. Your file structure should look like this:
+
+•	Arduino Code
+my-static-website-bucket/
+  	├── index.html
+  	├── styles.css
+  	├── script.js
+  	└── images/
+      	└── logo.png
+
+4. Access Your Static Website -
+•	Get the Bucket Website URL:
+
+•	Go to the "Properties" tab of your bucket.
+
+•	Scroll down to the "Static website hosting" section.
+
+•	You will see an "Endpoint" URL like http://my-static-website-bucket.s3-website-us-east-1.amazonaws.com. This is the URL where your static website is hosted.
+
+•	Test Your Website:
+
+•	Open a web browser and enter the endpoint URL. You should see your static website displayed.
+5. Set Up a Custom Domain with Route 53 – (Optional Settings)
+•	Purchase a Domain:
+
+•	If you don’t already have a domain, you can purchase one from a domain registrar like AWS Route 53 or another provider.
+
+•	Set Up Route 53:
+
+•	Go to the Route 53 console.
+
+•	Create a new hosted zone for your domain.
+
+•	Create a new record set:
+
+•	Choose "A - IPv4 address" as the record type.
+
+•	Choose "Alias" and select your S3 bucket’s website endpoint from the dropdown list.
+
+•	Click "Create" to save the record set.
+
+•	Update Domain Registrar:
+
+•	If your domain is registered outside of AWS, update the DNS settings with your domain registrar to point to the Route 53 nameservers provided in the hosted zone details.
+
+
+
+
+
+
+
+
+
+
+
+
+
+6. Configure HTTPS with Amazon CloudFront – (Optional Settings)
+•	Navigate to CloudFront:
+
+•	Go to the CloudFront console.
+
+•	Create a New Distribution:
+
+•	Click "Create Distribution".
+
+•	Choose "Web" as the delivery method.
+
+•	In the "Origin Settings":
+
+•	Set the "Origin Domain Name" to your S3 bucket website endpoint.
+
+•	Set "Origin Path" if you want to serve files from a specific folder.
+
+•	Configure SSL/TLS:
+
+•	Go to the "SSL Certificate" section and choose "Custom SSL Certificate" to use your domain’s certificate.
+
+•	You can request a free certificate from AWS Certificate Manager (ACM) or upload your own.
+
+•	Create the Distribution:
+
+•	Click "Create Distribution".
+
+•	Once created, you will get a CloudFront distribution domain name.
+
+•	Update Route 53:
+
+•	Create a new "CNAME" record in Route 53 to point your domain to the CloudFront distribution domain name.
+
