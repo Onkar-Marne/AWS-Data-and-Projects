@@ -1,0 +1,280 @@
+Project - ChoiceWave
+
+Building a real-time machine learning model deployment for a recommendation engine using Amazon product reviews involves several detailed steps. This solution will utilize AWS services to handle the data, train the model, and deploy it for real-time predictions. Here’s a comprehensive guide:
+
+1. Define the Use Case and Prepare Your Data -
+•	Define Your Use Case
+
+•	Problem: Real-Time Product Recommendations
+
+•	Objective: Develop a recommendation engine that provides real-time product recommendations based on user reviews and interactions.
+
+•	Model Type: Collaborative Filtering using Matrix Factorization (e.g., Singular Value Decomposition (SVD) or Alternating Least Squares (ALS))
+
+•	Prepare Your Data
+
+•	Data Collection:
+
+•	Use the Amazon product reviews dataset. You can obtain this from sources like the Amazon Product Review Dataset on AWS Public Datasets.
+
+•	Data Preprocessing:
+
+•	Download the Dataset:
+
+•	Bash Code
+aws s3 cp s3://amazon-reviews-pds/tsv/amazon_reviews_us_*.tsv.gz ./
+•	Extract and Load Data:
+
+•	Python Code
+import pandas as pd
+import gzip
+def load_data(file_path):
+    	with gzip.open(file_path, 'rt') as f:
+return pd.read_csv(f, delimiter='\t', low_memory=False)
+
+# Example file path
+df = load_data('amazon_reviews_us_Books_v1_02.tsv.gz')
+•	Filter Relevant Data:
+
+•	Python Code
+# Filter columns
+df = df[['reviewerID', 'asin', 'overall']]
+
+# Rename columns for convenience
+df.columns = ['user_id', 'item_id', 'rating']
+
+# Remove duplicates and handle missing values
+df = df.drop_duplicates()
+df = df.dropna()
+•	Data Split:
+
+•	Split data into training and testing sets.
+
+•	Python Code
+from sklearn.model_selection import train_test_split
+train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+
+2. Train Your Machine Learning Model -
+•	Set Up AWS SageMaker for Model Training
+
+•	Navigate to SageMaker Console:
+
+•	Go to Amazon SageMaker Console.
+
+•	Create a SageMaker Notebook Instance:
+
+•	Click on "Notebook instances".
+
+•	Click "Create notebook instance".
+
+•	Enter a name (e.g., RecommendationNotebook).
+
+•	Choose an instance type (e.g., ml.t2.medium).
+
+•	Attach an IAM role with permissions to access S3 and other necessary services.
+
+•	Click "Create notebook instance".
+
+•	Upload Training Data to S3:
+
+•	Go to Amazon S3 Console.
+
+•	Create a bucket (e.g., recommendation-data-bucket).
+
+•	Upload your training data CSV file to this bucket.
+
+•	Create a Training Script:
+
+•	Open the notebook instance and create a new Jupyter notebook. Use the following example code to set up a training script using matrix factorization (SVD):
+
+•	Python Code
+import sagemaker
+from sagemaker import get_execution_role
+from sagemaker.inputs import TrainingInput
+from sagemaker.estimator import Estimator
+import pandas as pd
+from surprise import Dataset, Reader
+from surprise import SVD
+from surprise import accuracy
+import joblib
+
+# Load data from S3
+s3_train_path = 's3://recommendation-data-bucket/train_data.csv'
+s3_test_path = 's3://recommendation-data-bucket/test_data.csv'
+train_df = pd.read_csv(s3_train_path)
+test_df = pd.read_csv(s3_test_path)
+
+# Surprise library expects a specific format
+reader = Reader(rating_scale=(1, 5))
+train_data = Dataset.load_from_df(train_df[['user_id', 'item_id', 'rating']], reader).build_full_trainset()
+
+# Train the model
+model = SVD()
+model.fit(train_data)
+
+# Save the model
+model_file = '/opt/ml/model/recommendation_model.joblib'
+joblib.dump(model, model_file)
+
+# Evaluate the model
+test_data = Dataset.load_from_df(test_df[['user_id', 'item_id', 'rating']], reader).build_full_trainset().build_testset()
+predictions = model.test(test_data)
+print('RMSE:', accuracy.rmse(predictions))
+
+•	Run the Training Job:
+
+•	Execute the notebook cells to train and save your model.
+
+3. Deploy the Model for Real-Time Predictions -
+•	Create a Model in SageMaker
+
+•	Navigate to SageMaker Console:
+
+•	Go to Amazon SageMaker Console.
+
+•	Create a Model:
+
+•	Click on "Models".
+
+•	Click "Create model".
+
+•	Enter a name (e.g., RecommendationModel).
+
+•	Choose a container image that supports your model (e.g., an AWS Deep Learning Container or a custom container).
+
+•	Specify the "Model artifacts" S3 path (the location of recommendation_model.joblib).
+
+•	Attach the IAM role with necessary permissions.
+
+•	Click "Create model".
+
+•	Create an Endpoint Configuration
+
+•	Navigate to SageMaker Console:
+
+•	Go to Amazon SageMaker Console.
+
+•	Create Endpoint Configuration:
+
+•	Click on "Endpoint configurations".
+
+•	Click "Create endpoint configuration".
+
+•	Enter a name (e.g., RecommendationEndpointConfig).
+
+•	Add your model to this configuration.
+
+•	Choose an instance type (e.g., ml.m5.large).
+
+•	Click "Create endpoint configuration".
+
+•	Deploy the Model Endpoint
+
+•	Navigate to SageMaker Console:
+
+•	Go to Amazon SageMaker Console.
+
+•	Create Endpoint:
+
+•	Click on "Endpoints".
+
+•	Click "Create endpoint".
+
+•	Enter a name (e.g., RecommendationEndpoint).
+
+•	Choose the endpoint configuration created earlier.
+
+•	Click "Create endpoint".
+
+•	Monitor the endpoint status until it becomes "InService".
+
+4. Interact with the Model Endpoint -
+•	Test the Endpoint with AWS SDK
+
+•	Install Boto3:
+
+•	If not already installed, install Boto3:
+
+•	Bash Code
+pip install boto3
+Use Boto3 to Invoke the Endpoint:
+•	Use the following Python script to send data to the endpoint and receive recommendations:
+•	Python Code
+import boto3
+import json
+
+# Set up the SageMaker runtime client
+runtime = boto3.client('sagemaker-runtime')
+
+# Define endpoint name
+endpoint_name = 'RecommendationEndpoint'
+# Prepare input data
+input_data = {
+    	'user_id': 'A3DLQIR0B6TBZ4',  # Example user ID
+    	'item_id': 'B07N2N4JHK'        # Example item ID
+}
+payload = json.dumps(input_data)
+
+# Invoke the endpoint
+response = runtime.invoke_endpoint(
+    	EndpointName=endpoint_name,
+    	ContentType='application/json',
+    	Body=payload
+)
+
+# Parse the response
+result = json.loads(response['Body'].read().decode())
+print(result)
+
+•	Response Example:
+
+•	The response might include a list of recommended item IDs or scores, based on the user and item IDs provided.
+
+5. Monitor and Optimize -
+•	Set Up CloudWatch Monitoring
+
+•	Navigate to CloudWatch Console:
+
+•	Go to Amazon CloudWatch Console.
+
+•	Create Alarms:
+
+•	Click "Alarms" and then "Create alarm".
+
+•	Choose metrics related to your SageMaker endpoint (e.g., latency, invocation count).
+
+•	Set thresholds and notifications for monitoring endpoint performance.
+
+•	Optimize the Model
+
+•	Monitor Performance:
+
+•	Analyze metrics from CloudWatch to identify performance issues.
+
+•	Adjust Instance Type:
+
+•	Modify the endpoint configuration if needed to use a different instance type for better performance.
+
+•	Update the Model:
+
+•	Retrain the model with new data or improved hyperparameters and redeploy the updated model.
+
+6. Clean Up Resources -
+•	Delete SageMaker Endpoint & Go to the SageMaker Console.
+
+•	Select the endpoint and click "Delete" & Delete SageMaker Model:
+
+•	Go to the SageMaker Console & Select the model and click "Delete".
+
+•	Delete S3 Buckets & Go to the S3 Console.
+
+•	Delete the buckets used for training data and model artifacts.
+
+•	Delete CloudWatch Alarms:
+
+•	Go to the CloudWatch Console.
+
+•	Delete any alarms you have created.
+
+By following these steps, you will have successfully built and deployed a real-time machine learning model for product recommendations using AWS services. This includes setting up the data pipeline, training the model, deploying it for real-time inference, and ensuring that it performs optimally.
+
