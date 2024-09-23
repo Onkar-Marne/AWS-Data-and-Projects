@@ -1,0 +1,157 @@
+Project - Serverless Symphony
+
+Below is a step-by-step guide to creating a serverless API using AWS Lambda and Amazon API Gateway, with Python as the runtime.
+
+1. Set Up Your AWS Environment -
+•	Sign in to the AWS Management Console:
+
+•	Go to AWS Management Console and sign in with your credentials.
+
+•	Navigate to AWS Lambda:
+
+•	Search for "Lambda" in the AWS Management Console search bar and select it.
+
+2. Create a Lambda Function -
+•	Create a New Lambda Function:
+
+•	Click "Create function".
+
+•	Choose "Author from scratch".
+
+•	Enter a function name (e.g., TodoFunction).
+
+•	For runtime, select "Python 3.x" (e.g., Python 3.9).
+
+•	For permissions, choose "Create a new role with basic Lambda permissions". This will create a role with basic permissions for Lambda to execute.
+
+•	Click "Create function".
+
+•	Configure Lambda Function Code:
+
+•	In the "Function code" section, you can write or upload your Python code. Here is the code  for handling HTTP requests:
+
+
+
+
+•	Python Code -
+
+import json
+
+def lambda_handler(event, context):
+    	http_method = event.get('httpMethod')
+    	resource = event.get('resource')
+    	body = json.loads(event.get('body', '{}'))
+
+    	if http_method == 'POST':
+        	response_message = 'Created a new item'
+    	elif http_method == 'GET':
+        	response_message = 'Fetched item'
+    	elif http_method == 'PUT':
+        	response_message = 'Updated item'
+    	elif http_method == 'DELETE':
+        	response_message = 'Deleted item'
+    	else:
+        	response_message = 'Unsupported method'
+    
+    	return {
+        	'statusCode': 200 if http_method in ['POST', 'GET', 'PUT', 'DELETE'] else 400,
+        	'body': json.dumps({'message': response_message}),
+        	'headers': {'Content-Type': 'application/json'}
+   	 }
+
+•	Click "Deploy" to save and deploy the function.
+
+3. Create an API in API Gateway -
+•	Navigate to API Gateway:
+
+•	Search for "API Gateway" in the AWS Management Console and select it.
+
+•	Create a New API:
+
+•	Click "Create API".
+
+•	Choose "HTTP API" for simplicity.
+
+•	Click "Build".
+
+•	Configure API Settings:
+
+•	Enter an API name (e.g., TodoAPI).
+
+•	Click "Next".
+
+•	Add Integration:
+
+•	Choose "Lambda" as the integration type.
+
+•	Select the Lambda function you created (e.g., TodoFunction).
+
+•	Click "Next".
+
+•	Define Routes:
+
+•	Click "Add integration" for each route you want to define. For a basic CRUD API, add routes like:
+
+•	GET /todos for retrieving items
+
+•	POST /todos for creating an item
+
+•	PUT /todos/{id} for updating an item
+
+•	DELETE /todos/{id} for deleting an item
+
+•	For each route, click "Configure" to link it to your Lambda function.
+
+•	Deploy API:
+
+•	Click "Deploy".
+
+•	Create or select a stage (e.g., prod for production).
+
+•	Click "Deploy" to publish your API.
+
+4. Test Your API -
+•	Get the API Endpoint:
+
+•	In the API Gateway console, find the Invoke URL for your deployed API stage.
+
+•	Test Using a Tool:
+
+•	Use a tool like Postman or curl to test your API endpoints.
+
+•	Some curl commands:
+
+•	Bash Code –
+
+•	curl -X GET <API_ENDPOINT>/todos
+
+•	curl -X POST <API_ENDPOINT>/todos -d '{"name": "New Todo"}'
+
+•	curl -X PUT <API_ENDPOINT>/todos/1 -d '{"name": "Updated Todo"}'
+
+•	curl -X DELETE <API_ENDPOINT>/todos/1
+
+5. Monitor and Debug -
+•	Monitor with CloudWatch:
+
+•	AWS Lambda integrates with Amazon CloudWatch for logging and monitoring automatically.
+
+•	Go to the CloudWatch console to view logs and metrics related to your Lambda function.
+
+•	Debugging:
+
+•	Check CloudWatch logs for any errors or issues in your Lambda function execution.
+
+•	Modify your Lambda function code as needed, then click "Deploy" to update the function.
+
+6. Set Up Security and Permissions – (Optional Settings)
+•	IAM Roles and Policies:
+
+•	Ensure your Lambda function and API Gateway have the appropriate IAM roles and policies.
+
+•	For additional security, configure API Gateway to use authentication mechanisms such as API keys, IAM roles, or OAuth.
+
+•	Rate Limiting and Throttling:
+
+•	Configure throttling settings in API Gateway to manage request rates and prevent abuse.
+
